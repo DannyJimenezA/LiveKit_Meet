@@ -5,7 +5,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
-function Tabs(props: React.PropsWithChildren<{}>) {
+function TabsContent(props: React.PropsWithChildren<{}>) {
   const searchParams = useSearchParams();
   const tabIndex = searchParams?.get('tab') === 'custom' ? 1 : 0;
 
@@ -38,6 +38,14 @@ function Tabs(props: React.PropsWithChildren<{}>) {
       {/* @ts-ignore */}
       {props.children[tabIndex]}
     </div>
+  );
+}
+
+function Tabs(props: React.PropsWithChildren<{}>) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TabsContent>{props.children}</TabsContent>
+    </Suspense>
   );
 }
 
@@ -162,12 +170,13 @@ function CustomConnectionTab(props: { label: string }) {
   );
 }
 
-export default function Page() {
+function AutoRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // 🚀 AUTOJOIN: Si la URL contiene ?token=..., redirige automáticamente al modo "Custom"
   useEffect(() => {
+    if (!searchParams) return;
     const token = searchParams.get('token');
     if (token) {
       const liveKitUrl = 'wss://salud-sin-fronteras-t5ebkkcs.livekit.cloud';
@@ -175,8 +184,15 @@ export default function Page() {
     }
   }, [router, searchParams]);
 
+  return null;
+}
+
+export default function Page() {
   return (
     <>
+      <Suspense fallback={null}>
+        <AutoRedirect />
+      </Suspense>
       <main className={styles.main} data-lk-theme="default">
         <div className="header">
           <img src="/images/livekit-meet-home.svg" alt="LiveKit Meet" width="360" height="45" />
@@ -192,12 +208,10 @@ export default function Page() {
             and Next.js.
           </h2>
         </div>
-        <Suspense fallback="Loading">
-          <Tabs>
-            <DemoMeetingTab label="Demo" />
-            <CustomConnectionTab label="Custom" />
-          </Tabs>
-        </Suspense>
+        <Tabs>
+          <DemoMeetingTab label="Demo" />
+          <CustomConnectionTab label="Custom" />
+        </Tabs>
       </main>
       <footer data-lk-theme="default">
         Hosted on{' '}

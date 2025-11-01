@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
@@ -45,6 +45,7 @@ function DemoMeetingTab(props: { label: string }) {
   const router = useRouter();
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
+
   const startMeeting = () => {
     if (e2ee) {
       router.push(`/rooms/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}`);
@@ -52,6 +53,7 @@ function DemoMeetingTab(props: { label: string }) {
       router.push(`/rooms/${generateRoomId()}`);
     }
   };
+
   return (
     <div className={styles.tabContent}>
       <p style={{ margin: 0 }}>Try LiveKit Meet for free with our live demo project.</p>
@@ -86,7 +88,6 @@ function DemoMeetingTab(props: { label: string }) {
 
 function CustomConnectionTab(props: { label: string }) {
   const router = useRouter();
-
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
 
@@ -103,6 +104,7 @@ function CustomConnectionTab(props: { label: string }) {
       router.push(`/custom/?liveKitUrl=${serverUrl}&token=${token}`);
     }
   };
+
   return (
     <form className={styles.tabContent} onSubmit={onSubmit}>
       <p style={{ marginTop: 0 }}>
@@ -161,6 +163,18 @@ function CustomConnectionTab(props: { label: string }) {
 }
 
 export default function Page() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 🚀 AUTOJOIN: Si la URL contiene ?token=..., redirige automáticamente al modo "Custom"
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      const liveKitUrl = 'wss://salud-sin-fronteras-t5ebkkcs.livekit.cloud';
+      router.push(`/custom/?liveKitUrl=${liveKitUrl}&token=${token}`);
+    }
+  }, [router, searchParams]);
+
   return (
     <>
       <main className={styles.main} data-lk-theme="default">
